@@ -3,8 +3,9 @@ Module Docstring not implemented yet
 """
 
 import os
-import random
 import shutil
+import random
+import subprocess
 from datetime import date
 
 from docx import Document
@@ -71,8 +72,11 @@ class Invoice(Config):
 
         self.__fill_variables(doc=doc, paypal=paypal_email)
         doc.save("./invoice_final.docx")
-        convert("./invoice_final.docx", "./invoice_final.pdf")
 
+        try:
+            convert("./invoice_final.docx", "./invoice_final.pdf")
+        except NotImplementedError:
+            subprocess.run(["libreoffice", "--headless", "--convert-to", "pdf", "./invoice_final.docx", "--outdir", "./"], check=True)
 
 
     def __fill_variables(self, doc, paypal: str = None):
