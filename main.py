@@ -10,11 +10,11 @@ from PIL import Image
 import easyocr
 import streamlit as st
 
-sys.path.append("./src")
-from logger import get_logger
-from Config import Config
-from Invoice import Invoice
-from PredictionService import PredictionService
+# sys.path.append("./src")
+from src.logger import get_logger
+from src.Config import Config
+from src.Invoice import Invoice
+from src.PredictionService import PredictionService
 
 
 if "logger" not in st.session_state:
