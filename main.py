@@ -17,7 +17,7 @@ from src.Invoice import Invoice
 from src.PredictionService import PredictionService
 
 st.write(os.getcwd())
-st.write(os.listdir())
+st.write(os.listdir("src"))
 
 if "logger" not in st.session_state:
     st.session_state.logger = get_logger()
