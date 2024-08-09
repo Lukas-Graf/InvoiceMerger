@@ -10,7 +10,7 @@ from PIL import Image
 import easyocr
 import streamlit as st
 
-# sys.path.append("./src")
+sys.path.append("./src")
 from src.logger import get_logger
 from src.Config import Config
 from src.Invoice import Invoice
