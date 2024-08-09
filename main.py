@@ -49,7 +49,7 @@ def get_roi(uploaded_images: list) -> None:
     Method Docstring not implemented yet
     """
     #Delete old files
-    for file in os.listdir(f"{directory}temp"):
+    for file in os.listdir(f"{os.getcwd}/src/temp/"):
         os.remove(f"src/temp/{file}")
 
     for idx, file in enumerate(uploaded_images):
