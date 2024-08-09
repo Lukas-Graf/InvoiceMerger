@@ -16,7 +16,7 @@ from src.Config import Config
 from src.Invoice import Invoice
 from src.PredictionService import PredictionService
 
-directory = os.path.join(os.getcwd(), "src/")
+st.write(os.getcwd())
 
 if "logger" not in st.session_state:
     st.session_state.logger = get_logger()
