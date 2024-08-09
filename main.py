@@ -11,13 +11,11 @@ import easyocr
 import streamlit as st
 
 sys.path.append("./src")
-from src.logger import get_logger
-from src.Config import Config
-from src.Invoice import Invoice
-from src.PredictionService import PredictionService
+from logger import get_logger
+from Config import Config
+from Invoice import Invoice
+from PredictionService import PredictionService
 
-st.write(os.getcwd())
-st.write(os.listdir("src"))
 
 if "logger" not in st.session_state:
     st.session_state.logger = get_logger()
@@ -49,7 +47,7 @@ def get_roi(uploaded_images: list) -> None:
     Method Docstring not implemented yet
     """
     #Delete old files
-    for file in os.listdir(f"{os.getcwd}/src/temp/"):
+    for file in os.listdir(f"{st.session_state.config.folder_src()}/temp/"):
         os.remove(f"src/temp/{file}")
 
     for idx, file in enumerate(uploaded_images):
