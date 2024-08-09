@@ -12,7 +12,6 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 
 import logger as log
-import logger as log
 from Config import Config
 from ImagePreprocessing import ImagePreprocessing
 
@@ -148,9 +147,11 @@ class PredictionService(Config):
 
         start_time = time.time()
 
-        extracted_text = reader.readtext(
-            f"{self.folder_src()}/temp/{img}", detail=0, batch_size = 12
-            )[0]
+        extracted_text = reader.recognize(f"{self.folder_src()}/temp/{img}")[0]
+        print(extracted_text)
+        # extracted_text = reader.readtext(
+        #     f"{self.folder_src()}/temp/{img}", detail=0, batch_size = 12
+        #     )[0]
 
         for key, value in replace_dict.items():
             if key in extracted_text:

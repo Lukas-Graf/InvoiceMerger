@@ -6,6 +6,7 @@ File is written in pylint standard
 """
 
 from typing import List, Any
+
 import imutils
 import cv2
 import matplotlib.pyplot as plt
