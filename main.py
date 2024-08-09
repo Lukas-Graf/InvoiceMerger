@@ -16,6 +16,7 @@ from src.Config import Config
 from src.Invoice import Invoice
 from src.PredictionService import PredictionService
 
+directory = os.path.join(os.getcwd(), "src/")
 
 if "logger" not in st.session_state:
     st.session_state.logger = get_logger()
@@ -47,7 +48,7 @@ def get_roi(uploaded_images: list) -> None:
     Method Docstring not implemented yet
     """
     #Delete old files
-    for file in os.listdir("src/temp/"):
+    for file in os.listdir(f"{directory}temp"):
         os.remove(f"src/temp/{file}")
 
     for idx, file in enumerate(uploaded_images):
