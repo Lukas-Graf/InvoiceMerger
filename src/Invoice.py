@@ -82,7 +82,7 @@ class Invoice(Config):
     def __fill_variables(self, doc, paypal: str = None):
         data = {
             "[Date]": date.today().strftime("%d-%m-%Y"),
-            "[Invoice-Number]": str(random.randint(1, 1_000_000)),
+            "[Invoice-Number]": date.today().strftime("%d-%m-%Y"),
             "[PayPal]": paypal
         }
 
