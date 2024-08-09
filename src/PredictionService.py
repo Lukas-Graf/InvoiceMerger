@@ -147,11 +147,9 @@ class PredictionService(Config):
 
         start_time = time.time()
 
-        extracted_text = reader.recognize(f"{self.folder_src()}/temp/{img}")[0]
-        print(extracted_text)
-        # extracted_text = reader.readtext(
-        #     f"{self.folder_src()}/temp/{img}", detail=0, batch_size = 12
-        #     )[0]
+        extracted_text = reader.readtext(
+            f"{self.folder_src()}/temp/{img}", detail=0, batch_size = 12
+            )[0]
 
         for key, value in replace_dict.items():
             if key in extracted_text:
