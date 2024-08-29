@@ -125,35 +125,35 @@ def write_invoice(paypal_email: str, hourly_rate: float, hours_worked: float) ->
     return None
 
 
-def ping_streamlit(url: str ="https://rechnung.streamlit.app/Logs", ping_interval: int =86_400) -> NoReturn:
-    """ 
-    Pings streamlit app to keep it active
+# def ping_streamlit(url: str ="https://rechnung.streamlit.app/Logs", ping_interval: int =86_400) -> NoReturn:
+#     """ 
+#     Pings streamlit app to keep it active
 
-    Parameters
-    ----------
-    url : str, optional (default="https://rechnung.streamlit.app/")
-        URL of app which should be pinged
-    ping_interval : int, optional (default=86_400)
-        Interval in which the app should be pinged (1 day)
+#     Parameters
+#     ----------
+#     url : str, optional (default="https://rechnung.streamlit.app/")
+#         URL of app which should be pinged
+#     ping_interval : int, optional (default=86_400)
+#         Interval in which the app should be pinged (1 day)
     
-    Returns
-    -------
-    NoReturn
-    """
-    while True:
-        try:
-            #Send a GET request to streamlit app
-            response = requests.get(url=url)
+#     Returns
+#     -------
+#     NoReturn
+#     """
+#     while True:
+#         try:
+#             #Send a GET request to streamlit app
+#             response = requests.get(url=url)
 
-            if response.status_code == 200:
-                log.get_logger().info(f"Pinged {url} successfully")
-            else:
-                log.get_logger().error(f"Failed to ping {url}")
+#             if response.status_code == 200:
+#                 log.get_logger().info(f"Pinged {url} successfully")
+#             else:
+#                 log.get_logger().error(f"Failed to ping {url}")
             
-        except Exception as e:
-            log.get_logger().error(f"Error pinging {url}: {e}")
+#         except Exception as e:
+#             log.get_logger().error(f"Error pinging {url}: {e}")
 
-        time.sleep(ping_interval)
+#         time.sleep(ping_interval)
 
 
 detection_model = load_detection_model()
@@ -202,4 +202,4 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-    ping_streamlit()
+    # ping_streamlit()
