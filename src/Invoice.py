@@ -1,35 +1,64 @@
 """ 
-Module Docstring not implemented yet
+This Module holds all methods to create an invoice
+
+File is written in pylint standard
 """
 
 import os
-import shutil
+import time
 import random
+import shutil
 import subprocess
 from datetime import date
 
 from docx import Document
-from docx.shared import Inches
 from docx2pdf import convert
+from docx.shared import Inches
 
 import logger as log
 from Config import Config
 
+
+
 class Invoice(Config):
-    """ 
-    Class Docstring not implemented yet
     """
-    def __init__(self, logger) -> None:
-        super().__init__(logger=logger)
+    Class defining methods to create an invoice
+    
+    ...
 
-    def write_image(self, paypal_email: str, total: float =None,
-                    hourly_rate: float =20.00, hours_worked: float =0.00):
-        """ 
-        Method Dostring not implemented yet
+    Methods
+    -------
+    write_image:
+        Writes all detected tables onto the invoice
+    write_text:
+        Writes all the needed text (cost of parts, etc.) on the invoice
+    pipeline:
+        Full pipeline that executes the whole invoice-creation
+
+    Private Methods
+    ---------------
+    __fill_variables:
+        Fills variables like email, invoice_nr, etc. on the invoice
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.__logger = log.get_logger()
+
+
+    def write_image(self, doc: Document) -> None:
         """
-        shutil.copy("./Invoice_Template.docx", "./invoice_final.docx")
+        Writes all detected tables onto the invoice
+        
+        Parameters
+        ----------
+        doc : Document (docx module)
+            Document where images should be written on
 
-        doc = Document("./invoice_final.docx")
+        Returns
+        -------
+        None
+        """
 
         page_width = doc.sections[0].page_width.inches
         left_margin = doc.sections[0].left_margin.inches
@@ -39,63 +68,132 @@ class Invoice(Config):
         for picture in os.listdir(f"{self.folder_src()}/temp/"):
             if str(picture).startswith("table"):
                 doc.add_picture(f"{self.folder_src()}/temp/{picture}", width=Inches(max_width))
+                self.__logger.info(f"Table '{picture}' was written on the invoice")
+                
+        return None
 
-        personal_cost = hourly_rate * hours_worked
 
-        return self.write_text(doc, total, personal_cost, paypal_email)
-
-    def write_text(self, doc, total, cost, paypal_email):
-        """ 
-        Method Dostring not implemented yet
+    def write_text(self, doc: Document, part_cost: float, personal_cost: float, email: str) -> None:
         """
+        Writes all the needed text (cost of parts, etc.) on the invoice
+        
+        Parameters
+        ----------
+        doc : Document (docx module)
+            Document where images should be written on
+        part_cost : float
+            Total sum of the parts
+        personal_cost : float
+            Total sum of personal loan
+        email : str
+            Email adress for paypal
+
+        Returns
+        -------
+        None
+        """
+
         doc.add_paragraph()
 
         p1 = doc.add_paragraph()
         p1.paragraph_format.tab_stops.add_tab_stop(Inches(1)) 
         p1.add_run("\tKosten Teile:").bold = True
-        p1.add_run(f" {total} €")
+        p1.add_run(f" {part_cost} €")
 
         p2 = doc.add_paragraph()
         p2.paragraph_format.tab_stops.add_tab_stop(Inches(1))
         p2.add_run("\tKosten Lohn:").bold = True
-        p2.add_run(f" {cost} €")
+        p2.add_run(f" {personal_cost} €")
 
         p3 = doc.add_paragraph()
         p3.paragraph_format.tab_stops.add_tab_stop(Inches(1))
         p3.add_run("\tGesamtkosten:").bold = True
-        p3.add_run(f" {round(total+cost, 2)} €")
+        p3.add_run(f" {round(part_cost+personal_cost, 2)} €")
 
         for paragraph in doc.paragraphs:
             for run in paragraph.runs:
                 run.font.name = "Book Antiqua"
-                run.font.size = Inches(0.2)
+                run.font.size = Inches(0.15)
 
-        self.__fill_variables(doc=doc, paypal=paypal_email)
+        self.__fill_variables(doc=doc, email=email)
         doc.save("./invoice_final.docx")
 
         try:
             convert("./invoice_final.docx", "./invoice_final.pdf")
         except NotImplementedError:
-            subprocess.run(["libreoffice", "--headless", "--convert-to", "pdf", "./invoice_final.docx", "--outdir", "./"], check=True)
+            subprocess.run(
+                ["libreoffice", "--headless", "--convert-to", "pdf", "./invoice_final.docx", "--outdir", "./"], check=True)
+
+        return None
+    
+
+    def pipeline(self, email: str, part_cost: float =None, 
+                 hourly_rate: float =20.00, hours_worked: float =0.00) -> None:
+        """
+        Full pipeline that executes the whole invoice-creation
+        
+        Parameters
+        ----------
+        email : str
+            Email address for paypal
+        part_cost : float (default=None)
+            Total sum of the parts
+        hourly_rate : float (default=20.00)
+            Hourly rate which the employee charges
+        hours_worked : float (default=0.00)
+            Hours that the employee worked
+
+        Returns
+        -------
+        None
+        """
+
+        start_time = time.time()
+        shutil.copy("./Invoice_Template.docx", "./invoice_final.docx")
+        doc = Document("./invoice_final.docx")
+
+        self.write_image(doc=doc)
+        self.write_text(doc=doc,
+                        part_cost=part_cost,
+                        personal_cost=float(hourly_rate * hours_worked),
+                        email=email)
+        end_time = time.time()
+
+        self.__logger.info(f"OCR-Pipeline executed successfully in {round(end_time-start_time, 4)} sec.")
+        return None
 
 
-    def __fill_variables(self, doc, paypal: str = None):
+    #----------Private Methods----------#
+    def __fill_variables(self, doc: Document, email: str = None) -> None:
+        """
+        Fills variables like email, invoice_nr, etc. on the invoice
+        
+        Parameters
+        ----------
+        doc : Document (docx module)
+            Document where images should be written on
+        email : str (default=None)
+            Email adress for paypal
+
+        Returns
+        -------
+        None
+        """
+
         data = {
             "[Date]": date.today().strftime("%d-%m-%Y"),
-            "[Invoice-Number]": date.today().strftime("%d-%m-%Y"),
-            "[PayPal]": paypal
+            "[Invoice-Number]": str(random.randint(111, 1111111)),
+            "[PayPal]": email
         }
 
-        for table in doc.tables:
-            for row in table.rows:
-                for cell in row.cells:
-                    for paragraph in cell.paragraphs:
-                        for key, value in data.items():
-                            if key in paragraph.text:
-                                for run in paragraph.runs:
-                                    if key in run.text:
-                                        run.text = run.text.replace(key, value)
+        for paragraph in doc.paragraphs:
+            for key, value in data.items():
+                if key in paragraph.text:
+                    paragraph.text = paragraph.text.replace(key, value)
+
+        return None
+
 
 
 if __name__ == "__main__":
-    invoice = Invoice(logger=log.get_logger())
+    invoice = Invoice()

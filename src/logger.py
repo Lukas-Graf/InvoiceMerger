@@ -9,14 +9,25 @@ import sys
 import logging
 
 
-def get_logger(name: str = "LOG", level: str = "INFO", file: str = "logs"):
+def get_logger(name: str = "LOG", level: str = "INFO", file: str = "logs") -> logging.Logger:
     """
-    Creates a logger for the script and logs into ./logs.log
-    Parameters:
-        name: str (default="LOG")
-        level: str (default="INFO")
-        file: str (default="logs)
-    """
+    Creates and configures a logger for the script, logging to both a file and the console.
+
+    Parameters
+    ----------
+    name : str, optional (default="LOG")
+        Name of the logger
+    level : str, optional (default="INFO")
+        Logging level (e.g., "DEBUG", "INFO", "WARNING")
+    file : str, optional (default="logs")
+        File name (without extension) where the logs will be written
+
+    Returns
+    -------
+    logging.Logger
+        The configured logger instance
+    """ 
+
     logger = logging.getLogger(name=name)
     if not logger.hasHandlers():
         logger.setLevel(level)

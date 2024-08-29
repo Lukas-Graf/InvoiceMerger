@@ -1,51 +1,66 @@
 """ 
+File containing all functions for the main multi-
+page app
 
+File is written in pylint standard
 """
 
 import os
 import sys
 import time
+import requests
 from PIL import Image
+from typing import NoReturn
 
-import easyocr
 import streamlit as st
 
 sys.path.append("./src")
-from logger import get_logger
+import logger as log
 from Config import Config
 from Invoice import Invoice
 from PredictionService import PredictionService
 
 
-if "logger" not in st.session_state:
-    st.session_state.logger = get_logger()
 
 if "config" not in st.session_state:
-    st.session_state.config = Config(logger=st.session_state.logger)
+    st.session_state.config = Config()
 
 if "invoice" not in st.session_state:
-    st.session_state.invoice = Invoice(logger=st.session_state.logger)
+    st.session_state.invoice = Invoice()
 
 @st.cache_resource
-def load_detection_model():
+def load_detection_model() -> PredictionService:
     """
+    Loads PredictionsService class
+
+    Returns
+    -------
+    PredictionsService (Instance)
     """
-    return PredictionService(logger=st.session_state.logger)
+    return PredictionService(confidence=0.3)
 
-@st.cache_resource
-def load_ocr_model():
-    """
-    """
-    return easyocr.Reader(['en'])
-
-
-detection_model = load_detection_model()
-ocr_model = load_ocr_model()
-
+@st.cache_data
 def get_roi(uploaded_images: list) -> None:
     """ 
-    Method Docstring not implemented yet
+    Cleans Image-Folder, Saves uploaded images and extracts detections
+    from it
+
+    Parameters
+    ----------
+    uploaded_images : list
+        Images which were uploaded from the user
+
+    Returns
+    -------
+    None
     """
+
+    img_length: int = len(uploaded_images)
+    if img_length == 1:
+        log.get_logger().info(f"{img_length} invoice was uploaded")
+    else:
+        log.get_logger().info(f"{img_length} invoices were uploaded")
+
     #Delete old files
     for file in os.listdir(f"{st.session_state.config.folder_src()}/temp/"):
         os.remove(f"src/temp/{file}")
@@ -55,48 +70,93 @@ def get_roi(uploaded_images: list) -> None:
         img = img.save(f"src/temp/img_{idx}.jpg")
 
     if uploaded_images is not None:
-        start_time = time.time()
         for img in os.listdir(f"{st.session_state.config.folder_src()}/temp/"):
-            detection_model.extract_table(
-                img=f"{st.session_state.config.folder_src()}/temp/{img}", confidence=0.7
+            detection_model.extract_detection(
+                img=f"{st.session_state.config.folder_src()}/temp/{img}"
                 )
 
-        end_time = time.time()
-        st.session_state.logger.info(
-            f"Images were detected and extracted in {end_time-start_time} sec."
-            )
+    return None
+
 
 def get_total_price() -> float:
     """ 
-    Method Docstring not implemented yet
+    Sums up the total prices of all the invoices
+
+    Returns
+    -------
+    float
     """
-    start_time = time.time()
 
     total: float = 0
     for img in os.listdir(f"{st.session_state.config.folder_src()}/temp/"):
         if str(img).startswith("price"):
             total_part = detection_model.extract_text(
-                img=img,
-                reader=ocr_model
+                img=img
                 )
             total += total_part
 
-    end_time = time.time()
-    st.session_state.logger.info(f"Total price was calculated in {end_time-start_time} sec.")
     return round(total, 2)
 
-def write_invoice(paypal_email, hourly_rate, hours_worked) -> None:
+
+def write_invoice(paypal_email: str, hourly_rate: float, hours_worked: float) -> None:
     """ 
     Method Docstring not implemented yet
+
+    Parameters
+    ----------
+    paypal_email : str
+        Email which the user left for future payment
+    hourly_rate : float
+        Hourly rate which the employee charges
+    hours_worked : float
+        Hours that the employee worked
+
+    Returns
+    -------
+    None
     """
-    st.session_state.invoice.write_image(
-        total=get_total_price(),
-        paypal_email=paypal_email,
+    st.session_state.invoice.pipeline(
+        email=paypal_email,
+        part_cost=get_total_price(),
         hourly_rate=hourly_rate,
         hours_worked=hours_worked
-        )
+    )
+
+    return None
 
 
+def ping_streamlit(url: str ="https://rechnung.streamlit.app/Logs", ping_interval: int =86_400) -> NoReturn:
+    """ 
+    Pings streamlit app to keep it active
+
+    Parameters
+    ----------
+    url : str, optional (default="https://rechnung.streamlit.app/")
+        URL of app which should be pinged
+    ping_interval : int, optional (default=86_400)
+        Interval in which the app should be pinged (1 day)
+    
+    Returns
+    -------
+    NoReturn
+    """
+    while True:
+        try:
+            #Send a GET request to streamlit app
+            response = requests.get(url=url)
+
+            if response.status_code == 200:
+                log.get_logger().info(f"Pinged {url} successfully")
+            else:
+                log.get_logger().error(f"Failed to ping {url}")
+            
+        except Exception as e:
+            log.get_logger().error(f"Error pinging {url}: {e}")
+
+        time.sleep(ping_interval)
+
+
+detection_model = load_detection_model()
 # -------Streamlit------- #
 def main() -> None:
     """ 
@@ -108,11 +168,10 @@ def main() -> None:
     paypal_email = st.text_input(
         "PayPal E-Mail"
     )
-
-    hourly_wage = st.number_input(
+    hourly_rate = st.number_input(
         "Stundenlohn (Euro)", min_value=10.0, step=0.5, format="%.2f"
         )
-    time_worked = st.number_input(
+    hours_worked = st.number_input(
         "Gearbeitete Zeit (Stunden)", min_value=0.0, step=0.5, format="%.1f"
         )
 
@@ -128,8 +187,8 @@ def main() -> None:
                 get_roi(uploaded_images=uploaded_images)
                 write_invoice(
                     paypal_email=paypal_email,
-                    hourly_rate=hourly_wage,
-                    hours_worked=time_worked
+                    hourly_rate=hourly_rate,
+                    hours_worked=hours_worked
                     )
             st.success("Done!")
             finished = True
@@ -140,5 +199,7 @@ def main() -> None:
         finished = False
 
 
+
 if __name__ == '__main__':
     main()
+    ping_streamlit()
