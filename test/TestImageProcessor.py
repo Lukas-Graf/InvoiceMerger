@@ -2,15 +2,16 @@
 Script tests all the methods in the ImageProcessing
 class
 """
+
 import sys
 
 import unittest
 import numpy as np
 
 sys.path.append("./src")
-import logger as log
 from Config import Config
 from ImageProcessing import ImageProcessing
+
 
 
 class TestImageProcessor(unittest.TestCase):
@@ -39,8 +40,7 @@ class TestImageProcessor(unittest.TestCase):
         Set up the class
         """
         self.preprocessor = ImageProcessing(
-            logger=log.get_logger(),
-            img=f"{Config(logger=log.get_logger()).folder_test()}/test_image.jpg"
+            img=f"{Config().folder_test()}/test_image.jpg"
             )
 
     def test_invert_image(self):
@@ -102,6 +102,8 @@ class TestImageProcessor(unittest.TestCase):
             result,
             np.ndarray,
             "Methods 'add_border' return value is not a NumPy array")
+
+
 
 if __name__ == '__main__':
     unittest.main()

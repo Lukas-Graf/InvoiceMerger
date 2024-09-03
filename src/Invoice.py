@@ -73,7 +73,8 @@ class Invoice(Config):
         return None
 
 
-    def write_text(self, doc: Document, part_cost: float, personal_cost: float, email: str) -> None:
+    def write_text(self, doc: Document, email: str, part_cost: float,
+                   personal_cost: float, cost_deduction: float) -> None:
         """
         Writes all the needed text (cost of parts, etc.) on the invoice
         
@@ -81,12 +82,16 @@ class Invoice(Config):
         ----------
         doc : Document (docx module)
             Document where images should be written on
+        email : str
+            Email adress for paypal
         part_cost : float
             Total sum of the parts
         personal_cost : float
             Total sum of personal loan
-        email : str
-            Email adress for paypal
+        cost_deduction : float (default=0.00)
+            Deduction of single costs, e.g. Oil was bought but
+            only 5 from 10 liters are used -> The price from the
+            other 5 liters is substracted from the total
 
         Returns
         -------
@@ -107,8 +112,13 @@ class Invoice(Config):
 
         p3 = doc.add_paragraph()
         p3.paragraph_format.tab_stops.add_tab_stop(Inches(1))
-        p3.add_run("\tGesamtkosten:").bold = True
-        p3.add_run(f" {round(part_cost+personal_cost, 2)} €")
+        p3.add_run("\tAbzug Einzelkosten:").bold = True
+        p3.add_run(f" {cost_deduction} €")
+
+        p4 = doc.add_paragraph()
+        p4.paragraph_format.tab_stops.add_tab_stop(Inches(1))
+        p4.add_run("\tGesamtkosten:").bold = True
+        p4.add_run(f" {round(part_cost+personal_cost-cost_deduction, 2)} €")
 
         for paragraph in doc.paragraphs:
             for run in paragraph.runs:
@@ -127,8 +137,8 @@ class Invoice(Config):
         return None
     
 
-    def pipeline(self, email: str, part_cost: float =None, 
-                 hourly_rate: float =20.00, hours_worked: float =0.00) -> None:
+    def pipeline(self, email: str, part_cost: float =None, hourly_rate: float =20.00,
+                 hours_worked: float =0.00, cost_deduction: float =0.00) -> None:
         """
         Full pipeline that executes the whole invoice-creation
         
@@ -142,6 +152,10 @@ class Invoice(Config):
             Hourly rate which the employee charges
         hours_worked : float (default=0.00)
             Hours that the employee worked
+        cost_deduction : float (default=0.00)
+            Deduction of single costs, e.g. Oil was bought but
+            only 5 from 10 liters are used -> The price from the
+            other 5 liters is substracted from the total
 
         Returns
         -------
@@ -154,9 +168,10 @@ class Invoice(Config):
 
         self.write_image(doc=doc)
         self.write_text(doc=doc,
+                        email=email,
                         part_cost=part_cost,
                         personal_cost=float(hourly_rate * hours_worked),
-                        email=email)
+                        cost_deduction=cost_deduction)
         end_time = time.time()
 
         self.__logger.info(f"OCR-Pipeline executed successfully in {round(end_time-start_time, 4)} sec.")

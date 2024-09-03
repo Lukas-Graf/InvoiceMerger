@@ -98,9 +98,9 @@ def get_total_price() -> float:
     return round(total, 2)
 
 
-def write_invoice(paypal_email: str, hourly_rate: float, hours_worked: float) -> None:
+def write_invoice(paypal_email: str, hourly_rate: float, hours_worked: float, cost_deduction: float) -> None:
     """ 
-    Method Docstring not implemented yet
+    Writes the whole invoice
 
     Parameters
     ----------
@@ -110,6 +110,10 @@ def write_invoice(paypal_email: str, hourly_rate: float, hours_worked: float) ->
         Hourly rate which the employee charges
     hours_worked : float
         Hours that the employee worked
+    cost_deduction : float
+        Deduction of single costs, e.g. Oil was bought but
+        only 5 from 10 liters are used -> The price from the
+        other 5 liters is substracted from the total
 
     Returns
     -------
@@ -119,7 +123,8 @@ def write_invoice(paypal_email: str, hourly_rate: float, hours_worked: float) ->
         email=paypal_email,
         part_cost=get_total_price(),
         hourly_rate=hourly_rate,
-        hours_worked=hours_worked
+        hours_worked=hours_worked,
+        cost_deduction=cost_deduction
     )
 
     return None
@@ -160,7 +165,11 @@ detection_model = load_detection_model()
 # -------Streamlit------- #
 def main() -> None:
     """ 
-    Method Docstring not implemented yet
+    Main streamlit visualization
+
+    Returns
+    -------
+    None
     """
     finished = False
     st.header('Rechnung erstellen', divider="grey")
@@ -170,10 +179,13 @@ def main() -> None:
     )
     hourly_rate = st.number_input(
         "Stundenlohn (Euro)", min_value=10.0, step=0.5, format="%.2f"
-        )
+    )
     hours_worked = st.number_input(
-        "Gearbeitete Zeit (Stunden)", min_value=0.0, step=0.5, format="%.1f"
-        )
+        "Gearbeitete Zeit (Stunden)", min_value=0.0, step=0.5, format="%.2f"
+    )
+    cost_deduction = st.number_input(
+        "Abzug Einzelkosten", min_value=0.0, step=0.5, format="%.2f"
+    )
 
     with st.form("my-form", clear_on_submit=True):
         uploaded_images = st.file_uploader(
@@ -188,7 +200,8 @@ def main() -> None:
                 write_invoice(
                     paypal_email=paypal_email,
                     hourly_rate=hourly_rate,
-                    hours_worked=hours_worked
+                    hours_worked=hours_worked,
+                    cost_deduction=cost_deduction
                     )
             st.success("Done!")
             finished = True

@@ -206,7 +206,7 @@ class PredictionService(Config):
         str
         """
 
-        return str(img).split('/')[-1].split('.')[0]
+        return str(img).split("/")[-1].split(".")[0]
     
     def __visualize(self, image: np.ndarray, boxes: list, scores: list, classes: list) -> None:
         """ 
@@ -269,5 +269,11 @@ class PredictionService(Config):
 
 
 if __name__ == "__main__":
+    import glob
+
     ps = PredictionService(confidence=0.3, write_xml=False)
-    ps.extract_detection(img=r"C:\Git_Repos\InvoiceMerger\src\temp\img_2.jpg", visualize=True)
+    files = glob.glob("./res/data/*.JPEG")
+    files = [str(file).replace("\\", "/") for file in files]
+
+    for file in files:
+        ps.extract_detection(img=file, visualize=True)
